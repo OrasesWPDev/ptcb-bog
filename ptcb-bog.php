@@ -386,53 +386,43 @@ final class PTCB_BOG {
 } // End of PTCB_BOG class
 
 /**
- * Filters the sample permalink HTML in the editor for the 'board-member' CPT.
- * Replaces the incorrect base URL shown due to global prefix conflicts.
+ * Filter the arguments for the 'board-member' post type right before it's registered.
+ * Sets the desired rewrite slug and ensures 'with_front' is false.
  *
- * @param string $html    The sample permalink HTML markup.
- * @param int    $post_id Post ID.
- * @param string $title   Post title.
- * @param string $name    Post slug.
- * @param object $post    Post object.
- * @return string Modified HTML.
+ * @param array  $args       The registration arguments passed to register_post_type.
+ * @param string $post_type  The post type name ('board-member').
+ * @return array Modified arguments.
  */
-function ptcb_bog_filter_sample_permalink_html( $html, $post_id, $title, $name, $post ) {
-	// Only filter for our specific post type
-	if ( isset($post->post_type) && 'board-member' === $post->post_type ) {
-		// Get the correct base URL part we want to see
-		$correct_base = home_url( '/ptcb-team/board-of-governors/' );
+function ptcb_bog_filter_registration_args( $args, $post_type ) {
+	// Make sure we only modify the 'board-member' post type
+	if ( 'board-member' === $post_type ) {
 
-		// Get the incorrect base URL part WordPress might be showing
-		// This finds the part before the editable slug in the current HTML
-		// Example: finds 'https://.../news/board-member/' in '<a ...>https://.../news/board-member/</a><span id="editable-post-name">slug</span>/'
-		preg_match( '/<a[^>]+>([^<]+)<\/a><span[^>]+>/i', $html, $matches );
-		if ( isset( $matches[1] ) ) {
-			$incorrect_display_url_part = $matches[1]; // e.g., 'https://.../news/board-member/'
+		// Define the desired rewrite settings
+		$correct_rewrite_args = array(
+			'slug'       => 'ptcb-team/board-of-governors', // Your desired URL base
+			'with_front' => false,                         // ** Prevents the /news/ prefix **
+			'feeds'      => false,
+			'pages'      => true, // Keep default
+		);
 
-			// Get just the path part of the incorrect URL (e.g., '/news/board-member/')
-			$incorrect_path = trailingslashit( wp_parse_url( $incorrect_display_url_part, PHP_URL_PATH ) );
+		// Add or overwrite the rewrite argument
+		$args['rewrite'] = $correct_rewrite_args;
 
-			// Get the path part of the correct base (e.g., '/ptcb-team/board-of-governors/')
-			$correct_path = trailingslashit( wp_parse_url( $correct_base, PHP_URL_PATH ) );
+		// Explicitly set has_archive (set to false as per original BOG logic)
+		$args['has_archive'] = false;
 
-			// If they don't match, replace the incorrect one in the HTML
-			if ($incorrect_path !== $correct_path) {
-				// Construct the full correct display URL part (including scheme/host)
-				$correct_display_url_part = home_url($correct_path);
-
-				// Replace the incorrect URL part within the <a> tag's text content
-				$html = str_replace( '>' . $incorrect_display_url_part . '<', '>' . $correct_display_url_part . '<', $html );
-
-				// Log the replacement if debugging
-				if ( function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE ) {
-					ptcb_bog()->log("Filtered sample permalink HTML. Replaced '{$incorrect_display_url_part}' with '{$correct_display_url_part}'.", 'debug');
-				}
-			}
+		// Log the modification if debugging is enabled
+		if ( function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE ) {
+			$log_message = 'Filtering board-member CPT registration args via register_post_type_args. Setting rewrite = ' . print_r($args['rewrite'], true);
+			$log_message .= ', has_archive = ' . ($args['has_archive'] ? 'true' : 'false');
+			ptcb_bog()->log( $log_message, 'info' );
 		}
 	}
-	return $html;
+	return $args;
 }
-add_filter( 'get_sample_permalink_html', 'ptcb_bog_filter_sample_permalink_html', 10, 5 );
+// Hook into the filter that runs just before register_post_type is finalized.
+// Priority 10 is usually fine, but 20 gives other plugins a chance to go first if needed.
+add_filter( 'register_post_type_args', 'ptcb_bog_filter_registration_args', 20, 2 );
 
 /**
  * Global accessor function for the PTCB_BOG instance.
