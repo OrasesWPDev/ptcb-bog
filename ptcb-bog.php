@@ -3,7 +3,7 @@
  * Plugin Name: PTCB BOG
  * Plugin URI: https://github.com/OrasesWPDev/ptcb-bog // Replace with your actual URI if different
  * Description: Custom WordPress plugin for managing Board of Governors (BOG) profiles with ACF Pro integration
- * Version: 1.0.0
+ * Version: 1.0.1 // Incremented version
  * Author: Orases // Replace with your actual Author if different
  * Author URI: https://orases.com // Replace with your actual Author URI if different
  *
@@ -15,18 +15,23 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-// CRITICAL CHANGE: Set debug mode (true for development, false for production)
+// --- Configuration ---
+// Set debug mode (true for development, false for production)
 define('PTCB_BOG_DEBUG_MODE', true); // Set to false for production
+define('PTCB_BOG_VERSION', '1.0.1');
+// ---------------------
 
-// Define plugin constants
-define('PTCB_BOG_VERSION', '1.0.0');
+// --- Plugin Constants ---
 define('PTCB_BOG_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PTCB_BOG_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('PTCB_BOG_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('PTCB_BOG_LOG_DIR', PTCB_BOG_PLUGIN_DIR . 'logs/');
+// -----------------------
+
 
 /**
- * Modify the 'board-member' post type registration early to set the custom permalink structure.
+ * Modify the 'board-member' post type registration arguments very early via the init hook.
+ * This sets the custom permalink structure and ensures it takes precedence.
  */
 function ptcb_bog_modify_post_type() {
 	global $wp_post_types;
@@ -37,9 +42,9 @@ function ptcb_bog_modify_post_type() {
 		// Set the desired rewrite slug for single posts
 		$wp_post_types['board-member']->rewrite = array(
 			'slug'       => 'ptcb-team/board-of-governors', // URL base for single posts
-			'with_front' => false, // Keep false to prevent WP prefixing
-			'feeds'      => false,
-			'pages'      => true
+			'with_front' => false, // CRITICAL: Prevent WP prefixing (like /news/)
+			'feeds'      => false, // No feeds needed
+			'pages'      => true   // Allow pagination if ever needed (usually not for CPT singles)
 		);
 
 		// IMPORTANT: Set has_archive to false as a dedicated page will be used for the archive/shortcode display.
@@ -47,29 +52,30 @@ function ptcb_bog_modify_post_type() {
 
 		// Log the modification if debugging is enabled
 		if (function_exists('ptcb_bog') && PTCB_BOG_DEBUG_MODE) {
-			ptcb_bog()->log('Modified board-member post type rewrite rules. Slug: ' . $wp_post_types['board-member']->rewrite['slug'] . ', Has Archive: false', 'info');
+			$log_message = 'Modified board-member CPT via init priority 1. Setting rewrite[slug] to: ' . $wp_post_types['board-member']->rewrite['slug'];
+			$log_message .= ', rewrite[with_front] to: ' . ($wp_post_types['board-member']->rewrite['with_front'] ? 'true' : 'false');
+			$log_message .= ', has_archive to: ' . ($wp_post_types['board-member']->has_archive ? 'true' : 'false');
+			ptcb_bog()->log($log_message, 'info');
 		}
 
-		// Flush rewrite rules once after modification to ensure changes take effect.
-		// Use a unique option name for this plugin's flush flag.
-		$option_name = 'ptcb_bog_post_type_modified_v' . PTCB_BOG_VERSION; // Versioning the option name
+		// Flush rewrite rules ONCE after modification to ensure changes take effect.
+		// Use a unique option name for this plugin's flush flag, versioned.
+		$option_name = 'ptcb_bog_post_type_modified_v' . PTCB_BOG_VERSION;
 		if ( get_option( $option_name ) !== 'yes' ) {
 			flush_rewrite_rules();
 			update_option( $option_name, 'yes' );
 			if (function_exists('ptcb_bog') && PTCB_BOG_DEBUG_MODE) {
-				ptcb_bog()->log('Flushed rewrite rules after modifying board-member post type (via init hook). Option: ' . $option_name, 'info');
+				ptcb_bog()->log('Flushed rewrite rules after modifying board-member post type (via init hook, option check). Option: ' . $option_name, 'info');
 			}
 		}
-	} else {
+	} elseif (function_exists('ptcb_bog') && PTCB_BOG_DEBUG_MODE) {
 		// Log a warning if the post type isn't registered when this attempts to run.
-		if (function_exists('ptcb_bog') && PTCB_BOG_DEBUG_MODE) {
-			ptcb_bog()->log('Attempted to modify rewrite rules, but post type "board-member" was not found at init priority 1.', 'warning');
-		}
+		// This might happen if the CPT is registered later than priority 1.
+		ptcb_bog()->log('Attempted to modify rewrite rules at init priority 1, but post type "board-member" was not found/registered yet.', 'warning');
 	}
 }
 // Run *very* early on init (priority 1) to modify the CPT settings before WP fully processes them.
-// This is crucial for the rewrite slug to be correctly recognized.
-add_action('init', 'ptcb_bog_modify_post_type', 11);
+add_action('init', 'ptcb_bog_modify_post_type', 1);
 
 
 /**
@@ -79,6 +85,9 @@ final class PTCB_BOG {
 	private static $instance = null;
 	private $loaded_classes = [];
 
+	/**
+	 * Get the singleton instance.
+	 */
 	public static function get_instance() {
 		if (is_null(self::$instance)) {
 			self::$instance = new self();
@@ -86,45 +95,65 @@ final class PTCB_BOG {
 		return self::$instance;
 	}
 
+	/**
+	 * Private constructor to prevent direct instantiation.
+	 */
 	private function __construct() {
 		$this->init_hooks();
 	}
 
 	/**
 	 * Setup debug logging directory and files.
+	 * Creates log directory and security files if needed.
+	 *
+	 * @return bool True if logging is possible (dir exists & writable), false otherwise.
 	 */
 	private function setup_debug_logging() {
 		if (!PTCB_BOG_DEBUG_MODE) {
-			return false;
+			return false; // Debug mode is off
 		}
 		if (!file_exists(PTCB_BOG_LOG_DIR)) {
+			// Try to create directory recursively
 			if (!@mkdir(PTCB_BOG_LOG_DIR, 0755, true)) {
+				error_log('PTCB BOG Plugin Error: Failed to create log directory: ' . PTCB_BOG_LOG_DIR);
 				return false; // Failed to create directory
 			}
-			// Add basic security files to the log directory
+			// Add basic security files to the log directory upon creation
 			@file_put_contents(PTCB_BOG_LOG_DIR . '.htaccess', "# Prevent direct access\n<FilesMatch \"\.log$\">\nOrder allow,deny\nDeny from all\n</FilesMatch>\n");
 			@file_put_contents(PTCB_BOG_LOG_DIR . 'index.html', '<!-- Silence is golden -->');
 		}
-		return is_writable(PTCB_BOG_LOG_DIR); // Return true if directory exists and is writable
+		// Check if directory is writable
+		if (!is_writable(PTCB_BOG_LOG_DIR)) {
+			error_log('PTCB BOG Plugin Error: Log directory is not writable: ' . PTCB_BOG_LOG_DIR);
+			return false;
+		}
+		return true; // Directory exists and is writable
 	}
 
 	/**
 	 * Log messages to a date-stamped file if debug mode is enabled.
+	 *
+	 * @param string $message The message to log.
+	 * @param string $level   Log level (e.g., 'info', 'debug', 'warning', 'error').
+	 * @return bool True on success, false on failure.
 	 */
 	public function log($message, $level = 'info') {
+		// Ensure logging is enabled and directory is setup/writable
 		if (!defined('PTCB_BOG_DEBUG_MODE') || !PTCB_BOG_DEBUG_MODE || !$this->setup_debug_logging()) {
-			// Ensure logging is enabled and the directory is writable
 			return false;
 		}
 		try {
-			$date = new DateTime('now', new DateTimeZone('America/New_York')); // Adjust timezone if needed
-			$timestamp = $date->format('Y-m-d H:i:s');
+			// Use a default timezone if WP timezone isn't set (fallback)
+			$timezone_string = get_option('timezone_string') ?: 'UTC';
+			$date = new DateTime('now', new DateTimeZone($timezone_string));
+			$timestamp = $date->format('Y-m-d H:i:s T'); // Include timezone
 			$log_message = "[{$timestamp}] [" . strtoupper($level) . "] {$message}" . PHP_EOL;
 			$log_file = PTCB_BOG_LOG_DIR . 'ptcb-bog-' . $date->format('Y-m-d') . '.log';
+
 			// Use file locking for safer writing in concurrent requests
 			return (bool)@file_put_contents($log_file, $log_message, FILE_APPEND | LOCK_EX);
 		} catch (Exception $e) {
-			error_log("PTCB BOG Logging Error: " . $e->getMessage()); // Log errors during logging to PHP error log
+			error_log("PTCB BOG Logging Exception: " . $e->getMessage()); // Log errors during logging to PHP error log
 			return false;
 		}
 	}
@@ -145,26 +174,26 @@ final class PTCB_BOG {
 	 * Plugin activation routine.
 	 */
 	public function activation() {
-		// Ensure our CPT modification function runs to register settings
+		$this->log('Plugin activating...', 'info');
+		// Ensure our CPT modification function runs to potentially register settings/flush rules
 		ptcb_bog_modify_post_type();
-		// Flush rewrite rules to recognize the new permalink structure immediately.
+		// Explicitly flush rewrite rules on activation.
 		flush_rewrite_rules();
-		// Log activation
-		$this->log('Plugin activated. Rewrite rules flushed.', 'info');
 		// Remove the 'modified' flag to ensure rules are checked/flushed on next load if needed
 		delete_option('ptcb_bog_post_type_modified_v' . PTCB_BOG_VERSION);
+		$this->log('Plugin activated. Rewrite rules flushed.', 'info');
 	}
 
 	/**
 	 * Plugin deactivation routine.
 	 */
 	public function deactivation() {
+		$this->log('Plugin deactivating...', 'info');
 		// Flush rules on deactivation to remove the custom structure.
 		flush_rewrite_rules();
-		// Log deactivation
-		$this->log('Plugin deactivated. Rewrite rules flushed.', 'info');
 		// Remove the 'modified' flag
 		delete_option('ptcb_bog_post_type_modified_v' . PTCB_BOG_VERSION);
+		$this->log('Plugin deactivated. Rewrite rules flushed.', 'info');
 	}
 
 	/**
@@ -173,6 +202,11 @@ final class PTCB_BOG {
 	public function init_plugin() {
 		if ($this->setup_debug_logging()) {
 			$this->log('init_plugin started on plugins_loaded hook.', 'info');
+		} else {
+			// Log to error log if debug setup failed but was intended
+			if (defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
+				error_log('PTCB BOG: init_plugin called, but debug logging setup failed.');
+			}
 		}
 
 		// Load required include files
@@ -181,7 +215,8 @@ final class PTCB_BOG {
 		// Add hooks that need to run after plugins_loaded
 		add_action('admin_init', array($this, 'check_dependencies'));
 		add_action('wp_enqueue_scripts', array($this, 'register_assets'));
-		// Enqueue override styles late if needed (consider if necessary vs. main CSS priority)
+		// Note: register_override_styles might be redundant if priority/dependencies work
+		// Consider removing if main CSS enqueue is sufficient
 		add_action('wp_enqueue_scripts', array($this, 'register_override_styles'), 999);
 
 		$this->log('init_plugin completed.', 'info');
@@ -205,8 +240,9 @@ final class PTCB_BOG {
 
 		foreach ($files_to_load as $key => $file_path) {
 			if (file_exists($file_path)) {
-				include_once $file_path;
+				include_once $file_path; // Use include_once to prevent fatal errors if already loaded
 				if (class_exists($expected_classes[$key])) {
+					// Instantiate the class and store it
 					$this->loaded_classes[$expected_classes[$key]] = new $expected_classes[$key]();
 					$this->log("Loaded and instantiated {$expected_classes[$key]}.", 'debug');
 				} else {
@@ -220,11 +256,12 @@ final class PTCB_BOG {
 		}
 
 		if ($load_error) {
+			// Display an admin notice if critical files failed to load
 			add_action('admin_notices', function() {
 				?>
-				<div class="notice notice-error is-dismissible">
-					<p><?php _e('<strong>PTCB BOG Plugin Error:</strong> One or more critical component files are missing or failed to load. Please check the plugin installation and logs.', 'ptcb-bog'); ?></p>
-				</div>
+                <div class="notice notice-error is-dismissible">
+                    <p><?php _e('<strong>PTCB BOG Plugin Error:</strong> One or more critical component files are missing or failed to load. Please check the plugin installation and logs.', 'ptcb-bog'); ?></p>
+                </div>
 				<?php
 			});
 		}
@@ -236,27 +273,34 @@ final class PTCB_BOG {
 	public function check_dependencies() {
 		if (!class_exists('acf')) {
 			add_action('admin_notices', array($this, 'acf_missing_notice'));
-			$this->log('Dependency check failed: Advanced Custom Fields (ACF) plugin not found.', 'warning');
-		} elseif (!class_exists('acf_pro')) {
-			// Only show the Pro notice if the base ACF exists but Pro doesn't
+			$this->log('Dependency check failed: Advanced Custom Fields (ACF) plugin not found or activated.', 'warning');
+		} elseif (!function_exists('acf_pro_init')) { // Check for a function specific to ACF Pro
 			add_action('admin_notices', array($this, 'acf_pro_missing_notice'));
-			$this->log('Dependency check failed: ACF Pro plugin not found (ACF base plugin detected).', 'warning');
+			$this->log('Dependency check failed: ACF Pro plugin not found or activated (ACF base plugin detected).', 'warning');
+		} else {
+			$this->log('Dependency check passed: ACF Pro found.', 'debug');
 		}
 	}
 
+	/**
+	 * Displays an admin notice if ACF base plugin is missing.
+	 */
 	public function acf_missing_notice() {
 		?>
-		<div class="notice notice-error">
-			<p><?php _e('<strong>PTCB BOG Plugin Warning:</strong> Requires the Advanced Custom Fields plugin to be installed and activated.', 'ptcb-bog'); ?></p>
-		</div>
+        <div class="notice notice-error">
+            <p><?php _e('<strong>PTCB BOG Plugin Warning:</strong> Requires the Advanced Custom Fields plugin to be installed and activated.', 'ptcb-bog'); ?></p>
+        </div>
 		<?php
 	}
 
+	/**
+	 * Displays an admin notice if ACF Pro plugin is missing.
+	 */
 	public function acf_pro_missing_notice() {
 		?>
-		<div class="notice notice-warning"> <?php // Changed to warning as base ACF might provide some functionality ?>
-			<p><?php _e('<strong>PTCB BOG Plugin Warning:</strong> Requires the PRO version of Advanced Custom Fields for full functionality. Please ensure ACF Pro is installed and activated.', 'ptcb-bog'); ?></p>
-		</div>
+        <div class="notice notice-warning"> <?php // Changed to warning as base ACF might provide some functionality ?>
+            <p><?php _e('<strong>PTCB BOG Plugin Warning:</strong> Requires the PRO version of Advanced Custom Fields for full functionality. Please ensure ACF Pro is installed and activated.', 'ptcb-bog'); ?></p>
+        </div>
 		<?php
 	}
 
@@ -266,7 +310,7 @@ final class PTCB_BOG {
 	public function register_assets() {
 		$this->log('Registering assets via wp_enqueue_scripts.', 'debug');
 
-		// Enqueue main CSS file with dynamic versioning
+		// Enqueue main CSS file with dynamic versioning based on file modification time
 		$css_file = PTCB_BOG_PLUGIN_DIR . 'assets/css/ptcb-bog.css';
 		if (file_exists($css_file)) {
 			$css_version = filemtime($css_file);
@@ -281,37 +325,41 @@ final class PTCB_BOG {
 			$this->log('ptcb-bog CSS file not found: ' . $css_file, 'warning');
 		}
 
+		// --- Optional JS Enqueue ---
 		// Enqueue JS only on single 'board-member' pages (if JS file exists)
-		if (is_singular('board-member')) { // Check for single CPT pages
-			$this->log('Attempting to enqueue JS for single board-member page.', 'debug');
-			$js_file = PTCB_BOG_PLUGIN_DIR . 'assets/js/ptcb-bog.js'; // Assumed path
-			if (file_exists($js_file)) {
-				$js_version = filemtime($js_file);
-				wp_enqueue_script(
-					'ptcb-bog', // JS handle (can be same as CSS if convenient)
-					PTCB_BOG_PLUGIN_URL . 'assets/js/ptcb-bog.js',
-					array('jquery'), // Dependencies
-					$js_version,
-					true // Load in footer
-				);
-				$this->log('Enqueued ptcb-bog JS version ' . $js_version, 'debug');
-			} else {
-				$this->log('ptcb-bog JS file not found: ' . $js_file, 'warning'); // Warning if JS file is expected but absent
-			}
-		}
+		 if (is_singular('board-member')) {
+		 	$this->log('Attempting to enqueue JS for single board-member page.', 'debug');
+		 	$js_file = PTCB_BOG_PLUGIN_DIR . 'assets/js/ptcb-bog.js'; // Assumed path
+		 	if (file_exists($js_file)) {
+		 		$js_version = filemtime($js_file);
+		 		wp_enqueue_script(
+		 			'ptcb-bog', // JS handle
+		 			PTCB_BOG_PLUGIN_URL . 'assets/js/ptcb-bog.js',
+		 			array('jquery'), // Dependencies
+		 			$js_version,
+		 			true // Load in footer
+		 		);
+		 		$this->log('Enqueued ptcb-bog JS version ' . $js_version, 'debug');
+		 	} else {
+		 		$this->log('ptcb-bog JS file not found: ' . $js_file, 'warning'); // Warning if JS file is expected but absent
+		 	}
+		 }
+		// --- End Optional JS ---
 	}
 
 	/**
 	 * Register CSS late to potentially override theme styles.
-	 * Note: Consider if simply adjusting the priority or dependencies of the main 'ptcb-bog' style in register_assets is sufficient.
+	 * Consider if adjusting priority or dependencies of the main 'ptcb-bog' style is sufficient.
 	 */
 	public function register_override_styles() {
+		// This might be redundant if the main CSS enqueue works correctly with dependencies/priority.
+		// If needed, uncomment and potentially adjust dependencies.
+
 		$this->log('Registering potentially overriding styles via wp_enqueue_scripts (late hook).', 'debug');
 		$css_file = PTCB_BOG_PLUGIN_DIR . 'assets/css/ptcb-bog.css';
 		if (file_exists($css_file)) {
 			$css_version = filemtime($css_file);
-			// Use a distinct handle if you need this loaded *in addition* to the main enqueue.
-			// If it's just about loading late, the hook priority might be enough.
+			// Use a distinct handle if needed in addition to the main enqueue.
 			wp_enqueue_style(
 				'ptcb-bog-override',
 				PTCB_BOG_PLUGIN_URL . 'assets/css/ptcb-bog.css',
@@ -324,8 +372,12 @@ final class PTCB_BOG {
 
 } // End of PTCB_BOG class
 
+
 /**
  * Global accessor function for the PTCB_BOG instance.
+ * Ensures only one instance of the plugin class is loaded.
+ *
+ * @return PTCB_BOG The singleton instance of the main plugin class.
  */
 function ptcb_bog() {
 	return PTCB_BOG::get_instance();
