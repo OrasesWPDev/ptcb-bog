@@ -3,7 +3,7 @@
  * Plugin Name: PTCB BOG
  * Plugin URI: https://github.com/OrasesWPDev/ptcb-bog // Replace with your actual URI if different
  * Description: Custom WordPress plugin for managing Board of Governors (BOG) profiles with ACF Pro integration
- * Version: 1.0.1 // Incremented version
+ * Version: 1.0.2 // Incremented version
  * Author: Orases // Replace with your actual Author if different
  * Author URI: https://orases.com // Replace with your actual Author URI if different
  *
@@ -48,7 +48,7 @@ function ptcb_bog_modify_post_type() {
 		);
 
 		// IMPORTANT: Set has_archive to false as a dedicated page will be used for the archive/shortcode display.
-		$wp_post_types['board-member']->has_archive = false;
+		$wp_post_types['board-member']->has_archive = true;
 
 		// Log the modification if debugging is enabled
 		if (function_exists('ptcb_bog') && PTCB_BOG_DEBUG_MODE) {
@@ -268,17 +268,33 @@ final class PTCB_BOG {
 	}
 
 	/**
-	 * Check for dependencies (ACF Pro) and display admin notices if missing.
+	 * Check for dependencies (ACF Pro) and display admin notices if missing AND debug mode is on.
 	 */
 	public function check_dependencies() {
-		if (!class_exists('acf')) {
-			add_action('admin_notices', array($this, 'acf_missing_notice'));
+		// Check for base ACF first
+		if ( ! class_exists('acf') ) {
+			// Only show notice if debug mode is ON
+			if ( defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE ) {
+				add_action('admin_notices', array( $this, 'acf_missing_notice' ));
+			}
+			// Log regardless of debug mode, as it's a dependency issue
 			$this->log('Dependency check failed: Advanced Custom Fields (ACF) plugin not found or activated.', 'warning');
-		} elseif (!function_exists('acf_pro_init')) { // Check for a function specific to ACF Pro
-			add_action('admin_notices', array($this, 'acf_pro_missing_notice'));
+
+			// If base ACF exists, check for Pro (using a reliable check like function_exists)
+		} elseif ( ! function_exists('acf_pro_init') ) {
+			// Only show notice if debug mode is ON
+			if ( defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE ) {
+				add_action('admin_notices', array( $this, 'acf_pro_missing_notice' ));
+			}
+			// Log regardless of debug mode
 			$this->log('Dependency check failed: ACF Pro plugin not found or activated (ACF base plugin detected).', 'warning');
+
+			// If both base and Pro seem active
 		} else {
-			$this->log('Dependency check passed: ACF Pro found.', 'debug');
+			// Only log success if debug mode is ON
+			if ( defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE ) {
+				$this->log('Dependency check passed: ACF Pro found and active.', 'debug');
+			}
 		}
 	}
 
