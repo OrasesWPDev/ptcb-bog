@@ -387,44 +387,44 @@ final class PTCB_BOG {
 	}
 
 } // End of PTCB_BOG class
-/**
- * Filter the arguments for the 'board-member' post type right before it's registered.
- * Sets the desired rewrite slug and ensures 'with_front' is false.
- *
- * @param array  $args       The registration arguments passed to register_post_type.
- * @param string $post_type  The post type name ('board-member').
- * @return array Modified arguments.
- */
-function ptcb_bog_filter_registration_args( $args, $post_type ) {
-	// Make sure we only modify the 'board-member' post type
-	if ( 'board-member' === $post_type ) {
-
-		// Define the desired rewrite settings
-		$correct_rewrite_args = array(
-			'slug'       => 'ptcb-team/board-of-governors', // Your desired URL base
-			'with_front' => false,                         // ** Prevents the /news/ prefix **
-			'feeds'      => false,
-			'pages'      => true, // Keep default
-		);
-
-		// Add or overwrite the rewrite argument
-		$args['rewrite'] = $correct_rewrite_args;
-
-		// Explicitly set has_archive (set to false as per original BOG logic)
-		$args['has_archive'] = false;
-
-		// Log the modification if debugging is enabled
-		if ( function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE ) {
-			$log_message = 'Filtering board-member CPT registration args via register_post_type_args. Setting rewrite = ' . print_r($args['rewrite'], true);
-			$log_message .= ', has_archive = ' . ($args['has_archive'] ? 'true' : 'false');
-			ptcb_bog()->log( $log_message, 'info' );
-		}
-	}
-	return $args;
-}
-// Hook into the filter that runs just before register_post_type is finalized.
-// Priority 10 is usually fine, but 20 gives other plugins a chance to go first if needed.
-add_filter( 'register_post_type_args', 'ptcb_bog_filter_registration_args', 20, 2 );
+///**
+// * Filter the arguments for the 'board-member' post type right before it's registered.
+// * Sets the desired rewrite slug and ensures 'with_front' is false.
+// *
+// * @param array  $args       The registration arguments passed to register_post_type.
+// * @param string $post_type  The post type name ('board-member').
+// * @return array Modified arguments.
+// */
+//function ptcb_bog_filter_registration_args( $args, $post_type ) {
+//	// Make sure we only modify the 'board-member' post type
+//	if ( 'board-member' === $post_type ) {
+//
+//		// Define the desired rewrite settings
+//		$correct_rewrite_args = array(
+//			'slug'       => 'ptcb-team/board-of-governors', // Your desired URL base
+//			'with_front' => false,                         // ** Prevents the /news/ prefix **
+//			'feeds'      => false,
+//			'pages'      => true, // Keep default
+//		);
+//
+//		// Add or overwrite the rewrite argument
+//		$args['rewrite'] = $correct_rewrite_args;
+//
+//		// Explicitly set has_archive (set to false as per original BOG logic)
+//		$args['has_archive'] = false;
+//
+//		// Log the modification if debugging is enabled
+//		if ( function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE ) {
+//			$log_message = 'Filtering board-member CPT registration args via register_post_type_args. Setting rewrite = ' . print_r($args['rewrite'], true);
+//			$log_message .= ', has_archive = ' . ($args['has_archive'] ? 'true' : 'false');
+//			ptcb_bog()->log( $log_message, 'info' );
+//		}
+//	}
+//	return $args;
+//}
+//// Hook into the filter that runs just before register_post_type is finalized.
+//// Priority 10 is usually fine, but 20 gives other plugins a chance to go first if needed.
+//add_filter( 'register_post_type_args', 'ptcb_bog_filter_registration_args', 20, 2 );
 
 /**
  * Global accessor function for the PTCB_BOG instance.
