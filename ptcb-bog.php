@@ -268,24 +268,21 @@ final class PTCB_BOG {
 	}
 
 	/**
-	 * Check for dependencies (ACF Pro) and display admin notices if missing AND debug mode is on.
+	 * Check for dependencies (ACF Pro) and display admin notices if missing.
+	 * Debug mode only controls logging level here, not notice visibility.
 	 */
 	public function check_dependencies() {
 		// Check for base ACF first
 		if ( ! class_exists('acf') ) {
-			// Only show notice if debug mode is ON
-			if ( defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE ) {
-				add_action('admin_notices', array( $this, 'acf_missing_notice' ));
-			}
-			// Log regardless of debug mode, as it's a dependency issue
-			$this->log('Dependency check failed: Advanced Custom Fields (ACF) plugin not found or activated.', 'warning');
+			// Always add the notice hook if base ACF is missing
+			add_action('admin_notices', array( $this, 'acf_missing_notice' ));
+			// Log regardless of debug mode, as it's a critical dependency issue
+			$this->log('Dependency check failed: Advanced Custom Fields (ACF) plugin not found or activated.', 'error'); // Log as error
 
-			// If base ACF exists, check for Pro (using a reliable check like function_exists)
-		} elseif ( ! function_exists('acf_pro_init') ) {
-			// Only show notice if debug mode is ON
-			if ( defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE ) {
-				add_action('admin_notices', array( $this, 'acf_pro_missing_notice' ));
-			}
+			// If base ACF exists, check for Pro
+		} elseif ( ! (defined('ACF_PRO') && ACF_PRO) ) { // Check if ACF_PRO constant is defined and true
+			// Always add the notice hook if Pro is missing
+			add_action('admin_notices', array( $this, 'acf_pro_missing_notice' ));
 			// Log regardless of debug mode
 			$this->log('Dependency check failed: ACF Pro plugin not found or activated (ACF base plugin detected).', 'warning');
 
