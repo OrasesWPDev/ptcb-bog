@@ -1,0 +1,393 @@
+/* ----------------------------------------
+   PTCB BOG - ARCHIVE/GRID CSS
+   For styling the [ptcb_bog] shortcode output
+   Using Flatsome theme's structure and breakpoints (assumed)
+   ---------------------------------------- */
+
+/* ----------------------------------------
+   1. CSS VARIABLES (CUSTOM PROPERTIES)
+   ---------------------------------------- */
+:root {
+    /* Base image sizes for the grid */
+    --ptcb-bog-archive-image-width: 225px; /* Example size */
+    --ptcb-bog-archive-image-height: 300px; /* Example size */
+
+    /* Spacing values */
+    --ptcb-bog-spacing-small: 10px;
+    --ptcb-bog-spacing-medium: 20px;
+    --ptcb-bog-spacing-large: 40px;
+
+    /* Colors - TO BE CUSTOMIZED BY THEME OR USER */
+    --ptcb-bog-primary-color: #0066cc;   /* Example */
+    --ptcb-bog-secondary-color: #444444; /* Example */
+    --ptcb-bog-text-color: #333333;      /* Example */
+    --ptcb-bog-post-title-color: #222222; /* Example for member name */
+    --ptcb-bog-board-title-color: #666666;/* Example for ACF title */
+    --ptcb-bog-bg-color: #ffffff;       /* Example card background */
+    --ptcb-bog-border-color: #eeeeee;    /* Example card border */
+    --ptcb-bog-separator-color: #dddddd; /* Example separator */
+}
+
+/* ----------------------------------------
+   2. GRID LAYOUT & MAIN CONTAINERS ([ptcb_bog] shortcode)
+   ---------------------------------------- */
+/* Main grid container for the shortcode */
+.ptcb-bog-grid {
+    width: 100%;
+    margin: 0 auto;
+    /* Using Flatsome's container padding system (adjust if needed) */
+    padding-left: 15px;
+    padding-right: 15px;
+    box-sizing: border-box; /* Ensure padding doesn't increase width */
+}
+
+/* Row container - matches Flatsome's row concept */
+.ptcb-bog-row {
+    display: flex;
+    flex-flow: row wrap;
+    width: 100%;
+    /* Negative margins to counteract column padding */
+    margin-left: -15px;
+    margin-right: -15px;
+    margin-bottom: var(--ptcb-bog-spacing-large);
+    box-sizing: border-box;
+}
+
+/* Column styling - default to 3 columns (adjust based on shortcode attribute) */
+/* Specific column count classes (.ptcb-bog-columns-2, .ptcb-bog-columns-4 etc.) can add specificity if needed */
+.ptcb-bog-column {
+    padding: 0 15px 30px; /* Gutter padding */
+    box-sizing: border-box;
+    width: 33.333%; /* Default for 3 columns */
+    max-width: 33.333%;
+    flex: 0 0 33.333%;
+}
+
+/* Empty column styling (for filling rows) */
+.ptcb-bog-column-empty {
+    padding: 0;
+    margin: 0;
+    height: 0;
+    border: 0;
+}
+
+/* ----------------------------------------
+   3. BOG MEMBER CARD STYLING ([ptcb_bog] shortcode)
+   ---------------------------------------- */
+/* Individual board member card */
+.ptcb-bog-card {
+    position: relative;
+    width: 100%;
+    height: 100%; /* Ensure cards in a row have same height potential */
+    border: 1px solid var(--ptcb-bog-border-color);
+    border-radius: 3px;
+    overflow: hidden;
+    background-color: var(--ptcb-bog-bg-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: transform .3s, box-shadow .3s;
+    display: flex; /* Make card a flex container */
+    flex-direction: column; /* Stack image and content vertically */
+}
+
+.ptcb-bog-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Link wrapping the card content */
+.ptcb-bog-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit; /* Inherit text color */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ----------------------------------------
+   4. BOG MEMBER IMAGE STYLING ([ptcb_bog] shortcode)
+   ---------------------------------------- */
+/* Image container */
+.ptcb-bog-card-image {
+    position: relative;
+    overflow: hidden;
+    background-color: #f7f7f7; /* Fallback background */
+    /* Define aspect ratio or fixed height if desired */
+}
+
+/* Image itself */
+/* Class .ptcb-bog-thumbnail is applied via helper function */
+.ptcb-bog-image,
+.ptcb-bog-thumbnail {
+    width: 100%;
+    height: auto; /* Maintain aspect ratio */
+    display: block;
+    transition: transform .3s ease-out;
+    backface-visibility: hidden; /* Improve rendering */
+}
+
+.ptcb-bog-card:hover .ptcb-bog-image,
+.ptcb-bog-card:hover .ptcb-bog-thumbnail {
+    transform: scale(1.05); /* Slight zoom on hover */
+}
+
+/* ----------------------------------------
+   5. BOG MEMBER CONTENT STYLING ([ptcb_bog] shortcode)
+   ---------------------------------------- */
+/* Content container (text below image) */
+.ptcb-bog-card-content {
+    padding: var(--ptcb-bog-spacing-medium);
+    text-align: center;
+    flex-grow: 1; /* Allow content to take remaining space */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center content vertically if space allows */
+}
+
+/* Board Member Name (Post Title) */
+.ptcb-bog-card-post-title {
+    margin-top: 0;
+    margin-bottom: 0.5em;
+    font-size: 1.1em; /* Example size */
+    font-weight: 600; /* Example weight */
+    line-height: 1.3;
+    color: var(--ptcb-bog-post-title-color);
+}
+
+/* Separator between Post Title and Board Title */
+.ptcb-bog-title-separator {
+    margin: var(--ptcb-bog-spacing-small) auto;
+    width: 40px; /* Example width */
+    border: 0;
+    height: 2px; /* Example height */
+    background-color: var(--ptcb-bog-separator-color);
+}
+
+/* Board Member's Title (ACF Field 'board_title') */
+/* Class applied via helper function */
+.ptcb-bog-board-title {
+    font-size: 0.9em; /* Example size */
+    color: var(--ptcb-bog-board-title-color);
+    margin-top: 0.5em;
+    line-height: 1.4;
+}
+
+/* ----------------------------------------
+   6. "NO BOG MEMBERS" MESSAGE STYLING ([ptcb_bog] shortcode)
+   ---------------------------------------- */
+.ptcb-bog-not-found {
+    text-align: center;
+    padding: var(--ptcb-bog-spacing-large);
+    border: 1px solid var(--ptcb-bog-border-color);
+    background-color: #f9f9f9; /* Light background */
+    border-radius: 3px;
+    margin: var(--ptcb-bog-spacing-medium) 0;
+}
+
+/* ----------------------------------------
+   7. RESPONSIVE STYLES - GRID ([ptcb_bog] shortcode)
+   Using assumed Flatsome breakpoints
+   ---------------------------------------- */
+/* Desktop: 850px and above (Default styles handle this) */
+
+/* Tablet: 550px to 849px */
+@media screen and (max-width: 849px) and (min-width: 550px) {
+    /* Example: Switch to 2 columns on tablets */
+    .ptcb-bog-column {
+        width: 50%;
+        max-width: 50%;
+        flex: 0 0 50%;
+    }
+    /* Adjustments for column counts if using specific classes */
+    /* .ptcb-bog-columns-4 .ptcb-bog-column { width: 50%; max-width: 50%; flex: 0 0 50%; } */
+    /* .ptcb-bog-columns-3 .ptcb-bog-column { width: 50%; max-width: 50%; flex: 0 0 50%; } */
+    /* etc. */
+}
+
+/* Mobile: 549px and below */
+@media screen and (max-width: 549px) {
+    /* Example: Switch to 1 column on mobile */
+    .ptcb-bog-column {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+
+    /* Reduce padding on mobile */
+    .ptcb-bog-card-content {
+        padding: var(--ptcb-bog-spacing-small);
+    }
+    .ptcb-bog-row {
+        margin-bottom: var(--ptcb-bog-spacing-medium); /* Reduce bottom margin */
+    }
+}
+
+/* ========================================
+   PTCB BOG - SINGLE PAGE CSS
+   For styling the single board member pages (templates/single-bog.php)
+   ======================================== */
+
+/* ----------------------------------------
+   1. HEADER AND BREADCRUMB STYLING (Single Page)
+   ---------------------------------------- */
+/* Wrapper for sections like header, bio */
+.ptcb-bog-section-wrapper {
+    margin-bottom: 40px; /* Space between sections */
+}
+
+/* Header section (likely contains UX Block) */
+.ptcb-bog-header {
+    /* Styles applied to the UX Block's section might override this */
+    /* Example: color: #fff; padding: 40px 0; */
+    position: relative;
+}
+
+/* Breadcrumbs Styling (inside the header UX block via [bog_breadcrumbs]) */
+.ptcb-bog-breadcrumbs {
+    margin: 10px 0; /* Example spacing */
+    font-size: 0.9rem; /* Example size */
+}
+
+/* Style links and text within breadcrumbs */
+.ptcb-bog-breadcrumbs a,
+.ptcb-bog-breadcrumbs span,
+.ptcb-bog-breadcrumbs .breadcrumb_last, /* Last item */
+.ptcb-bog-breadcrumbs .ptcb-breadcrumb-divider { /* Separator */
+    /* These might be overridden by UX Block section text color - use !important carefully if needed */
+    color: #fff !important; /* Example: White text to stand out on dark header */
+    text-decoration: none;
+}
+
+.ptcb-bog-breadcrumbs a:hover {
+    text-decoration: underline;
+    opacity: 0.9;
+}
+
+/* Separator styling */
+.ptcb-breadcrumb-divider {
+    margin: 0 5px; /* Space around separator */
+    display: inline-block;
+}
+
+/* ----------------------------------------
+   2. BOG BIO SECTION LAYOUT (Single Page)
+   ---------------------------------------- */
+.ptcb-bog-bio-section {
+    padding: 40px 0; /* Vertical padding */
+    margin-bottom: 40px; /* Space below bio */
+}
+
+/* ----------------------------------------
+   3. FEATURED IMAGE STYLING (Single Page)
+   ---------------------------------------- */
+/* Column containing the image */
+.ptcb-bog-featured-image-column {
+    display: flex;
+    align-items: flex-start; /* Align image to top */
+    justify-content: center; /* Center image horizontally if column is wider */
+}
+
+/* Wrapper div around the image */
+.ptcb-bog-featured-image {
+    width: 100%; /* Make wrapper take column width */
+    max-width: 350px; /* Optional: Limit max image width */
+    margin: 0 auto 20px; /* Center if max-width is used, add bottom margin */
+    border-radius: 5px; /* Optional rounded corners */
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Optional shadow */
+}
+
+/* The actual profile image */
+.ptcb-bog-profile-image {
+    display: block; /* Remove bottom space */
+    width: 100%;
+    height: auto; /* Maintain aspect ratio */
+}
+
+/* Placeholder for when no image exists */
+.ptcb-bog-no-featured-image {
+    /* Style as needed, e.g., background, border, min-height */
+    min-height: 200px; /* Example */
+    background-color: #f0f0f0; /* Example */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
+
+
+/* ----------------------------------------
+   4. BIO CONTENT STYLING (Single Page)
+   ---------------------------------------- */
+/* Column containing text content */
+.ptcb-bog-bio-column {
+    /* Adjust padding based on Flatsome grid behavior */
+    padding-left: 30px; /* Add space between image and text on larger screens */
+}
+
+/* Main content wrapper div */
+.ptcb-bog-bio-content {
+    line-height: 1.6; /* Improve readability */
+}
+
+/* Styling for the ACF 'board_title' on single page */
+/* Class applied via helper function PTCB_BOG_Helpers::the_board_title */
+.ptcb-bog-board-title { /* Reusing class from grid - ensure styles don't conflict or add specificity */
+    font-size: 1.5rem; /* Larger title on single page */
+    color: var(--ptcb-bog-post-title-color, #002c5c); /* Use variable, fallback color */
+    margin-bottom: 20px; /* Space below title */
+    font-weight: 500; /* Example weight */
+    line-height: 1.3;
+}
+
+/* Paragraph styling within the bio content */
+.ptcb-bog-bio-content p {
+    margin-bottom: 1.5em; /* Spacing between paragraphs */
+}
+
+/* Styling for the fallback "no bio" message */
+.ptcb-bog-no-bio {
+    font-style: italic;
+    color: #666;
+    padding: 20px 0; /* Add some vertical space */
+    margin: 0;
+}
+
+
+/* ----------------------------------------
+   5. RESPONSIVE STYLES (Single Page)
+   ---------------------------------------- */
+/* Tablet and Mobile */
+@media screen and (max-width: 849px) {
+    .ptcb-bog-bio-section {
+        padding: 30px 0; /* Reduce padding */
+    }
+}
+
+/* Mobile only */
+@media screen and (max-width: 549px) {
+    /* Remove left padding on text column, add top padding */
+    .ptcb-bog-bio-column {
+        padding-left: 0;
+        padding-top: 20px; /* Add space below image */
+    }
+
+    /* Center image on mobile if using max-width */
+    .ptcb-bog-featured-image {
+        max-width: 300px; /* Optional smaller max-width on mobile */
+        margin: 0 auto 20px; /* Ensure centering and bottom margin */
+    }
+
+    /* Adjust title size on mobile */
+    .ptcb-bog-board-title {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+
+    /* Further reduce padding on smallest screens */
+    .ptcb-bog-bio-section {
+        padding: 20px 0;
+    }
+}
