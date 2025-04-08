@@ -69,7 +69,7 @@ function ptcb_bog_modify_post_type() {
 }
 // Run *very* early on init (priority 1) to modify the CPT settings before WP fully processes them.
 // This is crucial for the rewrite slug to be correctly recognized.
-add_action('init', 'ptcb_bog_modify_post_type', 1);
+add_action('init', 'ptcb_bog_modify_post_type', 11);
 
 
 /**
