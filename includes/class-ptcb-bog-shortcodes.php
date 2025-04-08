@@ -125,35 +125,48 @@ class PTCB_BOG_Shortcodes {
 				}
 
 				// Get data using helper functions for consistency and safety
-				$board_title_html = PTCB_BOG_Helpers::the_board_title($post_id, false); // Get HTML, don't echo yet
-				$bog_image = PTCB_BOG_Helpers::get_bog_image($post_id, 'medium', array('class' => 'ptcb-bog-thumbnail')); // Specify desired class
+				// We get the HTML returned (echo = false) so we can control the order easily
+				// We specify the desired tag for each helper call
+				$board_title_html = PTCB_BOG_Helpers::the_board_title($post_id, 'h3', false);
+				$company_title_html = PTCB_BOG_Helpers::the_company_title($post_id, 'h4', false); // Get company title HTML (H4)
+				$bog_image = PTCB_BOG_Helpers::get_bog_image($post_id, 'medium', array('class' => 'ptcb-bog-thumbnail'));
 
 				?>
-				<div class="ptcb-bog-column ptcb-bog-column-<?php echo esc_attr(($count % $columns) + 1); ?>">
-					<div class="ptcb-bog-card">
-						<a href="<?php the_permalink(); ?>" class="ptcb-bog-card-link">
+                <div class="ptcb-bog-column ptcb-bog-column-<?php echo esc_attr(($count % $columns) + 1); ?>">
+                    <div class="ptcb-bog-card">
+                        <a href="<?php the_permalink(); ?>" class="ptcb-bog-card-link">
 
 							<?php if (!empty($bog_image)): ?>
-								<div class="ptcb-bog-card-image">
+                                <div class="ptcb-bog-card-image">
 									<?php echo $bog_image; // Output the image HTML ?>
-								</div>
+                                </div>
 							<?php endif; ?>
 
-							<div class="ptcb-bog-card-content">
-								<!-- WordPress Post Title (Member's Name) -->
-								<h3 class="ptcb-bog-card-post-title"><?php the_title(); ?></h3>
+                            <div class="ptcb-bog-card-content">
+                                <!-- WordPress Post Title (Member's Name) - CHANGED to H2 -->
+                                <h2 class="ptcb-bog-card-post-title"><?php the_title(); ?></h2>
+
+								<?php
+								// Only show separator if there's a board or company title below the main title
+								if (!empty($board_title_html) || !empty($company_title_html)) : ?>
+                                    <!-- Separator (Optional) -->
+                                    <hr class="ptcb-bog-title-separator">
+								<?php endif; ?>
 
 								<?php if (!empty($board_title_html)): ?>
-									<!-- Separator (Optional) -->
-									<hr class="ptcb-bog-title-separator">
-									<!-- ACF Board Title (Position/Role) -->
-									<?php echo $board_title_html; // Output the pre-formatted HTML safely ?>
+                                    <!-- ACF Board Title (Position/Role) - Uses H3 via helper -->
+									<?php echo $board_title_html; // Output the pre-formatted H3 HTML safely ?>
 								<?php endif; ?>
-							</div>
 
-						</a>
-					</div>
-				</div>
+								<?php if (!empty($company_title_html)): ?>
+                                    <!-- ACF Company Title - Uses H4 via helper -->
+									<?php echo $company_title_html; // Output the pre-formatted H4 HTML safely ?>
+								<?php endif; ?>
+                            </div>
+
+                        </a>
+                    </div>
+                </div>
 				<?php
 				$count++;
 			} // End while loop

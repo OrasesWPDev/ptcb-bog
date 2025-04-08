@@ -144,32 +144,45 @@
     justify-content: center; /* Center content vertically if space allows */
 }
 
-/* Board Member Name (Post Title) */
+/* 5-A. HEADING TYPOGRAPHY & HIERARCHY STYLES */
+/* --------------------------------------*/
+
+/* Post Title (Member Name) - H2 */
 .ptcb-bog-card-post-title {
     margin-top: 0;
     margin-bottom: 0.5em;
-    font-size: 1.1em; /* Example size */
-    font-weight: 600; /* Example weight */
+    font-size: 1.25em; /* Largest size for visual hierarchy */
+    font-weight: 600; /* Semi-bold */
     line-height: 1.3;
-    color: var(--ptcb-bog-post-title-color);
+    color: var(--ptcb-bog-post-title-color); /* Using shared variable for title colors */
 }
 
-/* Separator between Post Title and Board Title */
+/* Separator between titles */
 .ptcb-bog-title-separator {
     margin: var(--ptcb-bog-spacing-small) auto;
-    width: 40px; /* Example width */
+    width: 40px; /* Width of the line */
     border: 0;
-    height: 2px; /* Example height */
+    height: 2px; /* Height/thickness of the line */
     background-color: var(--ptcb-bog-separator-color);
 }
 
-/* Board Member's Title (ACF Field 'board_title') */
-/* Class applied via helper function */
+/* Board Title (Position/Role) - H3 */
 .ptcb-bog-board-title {
-    font-size: 0.9em; /* Example size */
-    color: var(--ptcb-bog-board-title-color);
+    font-size: 1em; /* Medium size - between post title and company title */
+    color: var(--ptcb-bog-post-title-color); /* Same variable as post title for color consistency */
     margin-top: 0.5em;
+    margin-bottom: 0.3em; /* Add space before company title */
     line-height: 1.4;
+    font-weight: 500; /* Medium weight - between post title and company title */
+}
+
+/* Company Title (Organization) - H4 */
+.ptcb-bog-company-title {
+    font-size: 0.9em; /* Smallest size in the hierarchy */
+    color: var(--ptcb-bog-post-title-color); /* Same variable as other titles for color consistency */
+    margin-top: 0.3em;
+    line-height: 1.4;
+    font-weight: 400; /* Regular weight - lightest in the hierarchy */
 }
 
 /* ----------------------------------------
@@ -186,39 +199,76 @@
 
 /* ----------------------------------------
    7. RESPONSIVE STYLES - GRID ([ptcb_bog] shortcode)
-   Using assumed Flatsome breakpoints
+   Using Flatsome breakpoints
    ---------------------------------------- */
 /* Desktop: 850px and above (Default styles handle this) */
 
 /* Tablet: 550px to 849px */
 @media screen and (max-width: 849px) and (min-width: 550px) {
-    /* Example: Switch to 2 columns on tablets */
+    /* Grid columns: Switch to 2 columns on tablets */
     .ptcb-bog-column {
         width: 50%;
         max-width: 50%;
         flex: 0 0 50%;
     }
-    /* Adjustments for column counts if using specific classes */
-    /* .ptcb-bog-columns-4 .ptcb-bog-column { width: 50%; max-width: 50%; flex: 0 0 50%; } */
-    /* .ptcb-bog-columns-3 .ptcb-bog-column { width: 50%; max-width: 50%; flex: 0 0 50%; } */
-    /* etc. */
+
+    /* Title size adjustments for tablets */
+    .ptcb-bog-card-post-title {
+        font-size: 1.2em; /* Slightly smaller than desktop */
+    }
+
+    .ptcb-bog-board-title {
+        font-size: 0.95em; /* Slightly smaller than desktop */
+    }
+
+    .ptcb-bog-company-title {
+        font-size: 0.85em; /* Slightly smaller than desktop */
+    }
+
+    /* Separator adjustment */
+    .ptcb-bog-title-separator {
+        width: 35px; /* Slightly narrower on tablets */
+    }
 }
 
 /* Mobile: 549px and below */
 @media screen and (max-width: 549px) {
-    /* Example: Switch to 1 column on mobile */
+    /* Grid columns: Switch to 1 column on mobile */
     .ptcb-bog-column {
         width: 100%;
         max-width: 100%;
         flex: 0 0 100%;
     }
 
-    /* Reduce padding on mobile */
+    /* Spacing adjustments */
     .ptcb-bog-card-content {
         padding: var(--ptcb-bog-spacing-small);
     }
+
     .ptcb-bog-row {
         margin-bottom: var(--ptcb-bog-spacing-medium); /* Reduce bottom margin */
+    }
+
+    /* Title size adjustments for mobile */
+    .ptcb-bog-card-post-title {
+        font-size: 1.15em; /* Further reduced on mobile */
+        margin-bottom: 0.4em; /* Tighter spacing */
+    }
+
+    .ptcb-bog-board-title {
+        font-size: 0.9em; /* Further reduced on mobile */
+        margin-bottom: 0.2em; /* Tighter spacing */
+    }
+
+    .ptcb-bog-company-title {
+        font-size: 0.8em; /* Further reduced on mobile */
+    }
+
+    /* Smaller separator on mobile */
+    .ptcb-bog-title-separator {
+        width: 30px;
+        height: 1px; /* Thinner line */
+        margin: var(--ptcb-bog-spacing-small) auto; /* Less vertical space */
     }
 }
 

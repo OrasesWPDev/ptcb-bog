@@ -96,10 +96,11 @@ class PTCB_BOG_Helpers {
 	 * Display the Board Title (from ACF field 'board_title') wrapped in HTML.
 	 *
 	 * @param int|null $post_id Optional. Post ID. Defaults to current post.
+	 * @param string $tag Optional. The HTML tag to wrap the title in. Default 'h3'.
 	 * @param bool $echo Optional. Whether to echo the HTML (true) or return it (false). Default true.
 	 * @return string|void HTML output if $echo is false.
 	 */
-	public static function the_board_title($post_id = null, $echo = true) {
+	public static function the_board_title($post_id = null, $tag = 'h3', $echo = true) { // MODIFIED: Added $tag parameter, default 'h3'
 		$current_post_id_log = $post_id ? $post_id : 'current post (' . get_the_ID() . ')';
 		if (function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
 			ptcb_bog()->log('Generating board_title HTML for post ID: ' . $current_post_id_log, 'debug');
@@ -114,8 +115,13 @@ class PTCB_BOG_Helpers {
 			return ''; // Return empty string if no title
 		}
 
-		// CSS class name updated to be specific to BOG
-		$html = '<div class="ptcb-bog-board-title">' . esc_html($board_title) . '</div>';
+		// Sanitize the tag
+		$allowed_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'p', 'span'];
+		$tag = in_array(strtolower($tag), $allowed_tags) ? strtolower($tag) : 'h3'; // Default to h3 if tag not allowed
+
+		// CSS class name updated to be specific to BOG Board Title
+		// MODIFIED: Wrap in the specified tag
+		$html = '<' . $tag . ' class="ptcb-bog-board-title">' . esc_html($board_title) . '</' . $tag . '>';
 
 		if ($echo) {
 			if (function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
@@ -125,6 +131,68 @@ class PTCB_BOG_Helpers {
 		} else {
 			if (function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
 				ptcb_bog()->log('Returning board_title HTML.', 'debug');
+			}
+			return $html;
+		}
+	}
+
+	/**
+	 * Get the 'company_title' ACF field value for a Board Member.
+	 *
+	 * @param int|null $post_id Optional. Post ID. Defaults to current post.
+	 * @return string The company title or an empty string if not found.
+	 */
+	public static function get_company_title($post_id = null) {
+		$current_post_id_log = $post_id ? $post_id : 'current post (' . get_the_ID() . ')';
+		if (function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
+			ptcb_bog()->log('Getting company_title for post ID: ' . $current_post_id_log, 'debug');
+		}
+		// Use the safe helper function to retrieve the ACF field
+		$title = self::get_acf_field('company_title', $post_id, ''); // Field name is company_title
+		if (function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
+			ptcb_bog()->log('Company title retrieved: ' . ($title ?: '(empty)'), 'debug');
+		}
+		return $title;
+	}
+
+	/**
+	 * Display the Company Title (from ACF field 'company_title') wrapped in HTML H4 tags.
+	 *
+	 * @param int|null $post_id Optional. Post ID. Defaults to current post.
+	 * @param string $tag Optional. The HTML tag to wrap the title in. Default 'h4'.
+	 * @param bool $echo Optional. Whether to echo the HTML (true) or return it (false). Default true.
+	 * @return string|void HTML output if $echo is false.
+	 */
+	public static function the_company_title($post_id = null, $tag = 'h4', $echo = true) {
+		$current_post_id_log = $post_id ? $post_id : 'current post (' . get_the_ID() . ')';
+		if (function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
+			ptcb_bog()->log('Generating company_title HTML for post ID: ' . $current_post_id_log, 'debug');
+		}
+
+		$company_title = self::get_company_title($post_id);
+
+		if (empty($company_title)) {
+			if (function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
+				ptcb_bog()->log('Company title is empty, not outputting HTML.', 'debug');
+			}
+			return ''; // Return empty string if no title
+		}
+
+		// Sanitize the tag
+		$allowed_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'p', 'span'];
+		$tag = in_array(strtolower($tag), $allowed_tags) ? strtolower($tag) : 'h4'; // Default to h4 if tag not allowed
+
+		// CSS class name specific to BOG Company Title
+		$html = '<' . $tag . ' class="ptcb-bog-company-title">' . esc_html($company_title) . '</' . $tag . '>';
+
+		if ($echo) {
+			if (function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
+				ptcb_bog()->log('Echoing company_title HTML.', 'debug');
+			}
+			echo $html;
+		} else {
+			if (function_exists('ptcb_bog') && defined('PTCB_BOG_DEBUG_MODE') && PTCB_BOG_DEBUG_MODE) {
+				ptcb_bog()->log('Returning company_title HTML.', 'debug');
 			}
 			return $html;
 		}

@@ -28,7 +28,7 @@ class PTCB_BOG_Templates {
 		add_filter('body_class', array($this, 'add_bog_body_classes'));
 
 		// Filter the permalink for 'board-member' posts to match our custom structure
-		add_filter('post_type_link', array($this, 'bog_permalink_structure'), 10, 2);
+//		add_filter('post_type_link', array($this, 'bog_permalink_structure'), 10, 2);
 
 		// Add the rewrite rule needed for our custom permalink structure
 		// Priority 10 ensures CPT is registered; our CPT mod runs at priority 1
